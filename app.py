@@ -3,27 +3,28 @@ import json, os, re, datetime
 
 app = Flask(__name__, template_folder=os.path.dirname(os.path.abspath(__file__)))
 
-ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 
 def call_claude(system_prompt, user_prompt, max_tokens=4096):
     import urllib.request
     headers = {
         "Content-Type": "application/json",
-        "x-api-key": ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01"
+        "Authorization": f"Bearer {GROQ_API_KEY}"
     }
     payload = json.dumps({
-        "model": "claude-sonnet-4-20250514",
+        "model": "llama-3.3-70b-versatile",
         "max_tokens": max_tokens,
-        "system": system_prompt,
-        "messages": [{"role": "user", "content": user_prompt}]
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ]
     }).encode()
     req = urllib.request.Request(
-        "https://api.anthropic.com/v1/messages",
+        "https://api.groq.com/openai/v1/chat/completions",
         data=payload, headers=headers, method="POST"
     )
     with urllib.request.urlopen(req) as resp:
-        return json.loads(resp.read())["content"][0]["text"]
+        return json.loads(resp.read())["choices"][0]["message"]["content"]
 
 def strip_json(raw):
     raw = raw.strip()
@@ -86,7 +87,7 @@ def analyze():
     if not text:
         return jsonify({"error": "No text provided"}), 400
         
-    if engine == "ollama" or not ANTHROPIC_API_KEY:
+    if engine == "ollama" or not GROQ_API_KEY:
         # Mock logic simulates local Ollama execution when engine is ollama
         import time; time.sleep(1.5) # Simulate local processing delay
         return jsonify({"claims": mock_analyze(text, mode), "mocked": True, "engine": engine})
@@ -153,7 +154,7 @@ def rewrite_doc():
     claims = data.get("claims",[])
     engine = data.get("engine", "anthropic")
     
-    if engine == "ollama" or not ANTHROPIC_API_KEY:
+    if engine == "ollama" or not GROQ_API_KEY:
         import time; time.sleep(2)
         result = text
         for c in claims:
