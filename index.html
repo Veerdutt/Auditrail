@@ -1,0 +1,2384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auditrail | Secure the Intelligent Edge</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>
+        // PDF.js worker setup with legacy support and error guarding
+        if (typeof pdfjsLib !== 'undefined') {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+        } else {
+            console.warn('Auditrail: PDF.js Legacy failed to load.');
+        }
+    </script>
+    <style>
+        :root {
+            --bg: #030407;
+            --surface: #0a0c10;
+            --panel: rgba(16, 20, 28, 0.7);
+            --border: rgba(255, 255, 255, 0.08);
+            --border-bright: rgba(255, 255, 255, 0.15);
+            --text: #ffffff;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --accent-glow: rgba(56, 189, 248, 0.3);
+            --accent-dark: #0284c7;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --font-sans: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --font-display: 'Syne', sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: var(--font-sans);
+            font-size: 14px;
+            line-height: 1.5;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Scrollbar Customization */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--border-bright); }
+
+        /* Typography */
+        h1, h2, h3 { font-family: var(--font-display); font-weight: 800; letter-spacing: -0.02em; }
+        .mono { font-family: var(--font-mono); }
+
+        /* Layout Shell */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            width: 100vw;
+            position: relative;
+            background-image: 
+                radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0);
+            background-size: 40px 40px;
+        }
+
+        .app-container::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("https://grainy-gradients.vercel.app/noise.svg");
+            opacity: 0.2;
+            pointer-events: none;
+            z-index: 100;
+            mix-blend-mode: overlay;
+        }
+
+        /* Entrance Animations - FIXED */
+        @keyframes reveal {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .reveal { animation: reveal 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; }
+        .reveal-delay-1 { animation-delay: 0.15s; }
+        .reveal-delay-2 { animation-delay: 0.3s; }
+        .reveal-delay-3 { animation-delay: 0.45s; }
+        .reveal-delay-4 { animation-delay: 0.6s; }
+
+        /* Animated Gradient Text */
+        @keyframes gradient-shift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .hero-gradient-text {
+            background: linear-gradient(135deg, #a7f3d0, #38bdf8, #818cf8, #c084fc, #38bdf8, #a7f3d0);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 6s ease infinite;
+        }
+
+        /* Glow Badge */
+        .glow-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 100px;
+            padding: 6px 16px;
+            font-size: 12px;
+            font-family: var(--font-mono);
+            color: #38bdf8;
+            letter-spacing: 0.08em;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.15), inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+
+        /* Gradient Border Card */
+        .gradient-border-card {
+            position: relative;
+            border-radius: 20px;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(56,189,248,0.4), rgba(129,140,248,0.4), rgba(192,132,252,0.4));
+        }
+
+        .gradient-border-card-inner {
+            background: #0a0c14;
+            border-radius: 19px;
+            padding: 32px;
+            height: 100%;
+        }
+
+        /* Home Hero Section */
+        .home-hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 80px 40px 60px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Hero Background Glow System */
+        .hero-glow-1 {
+            position: absolute;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(56,189,248,0.18) 0%, transparent 65%);
+            top: -100px; left: -100px;
+            filter: blur(60px);
+            animation: glow-drift-1 12s ease-in-out infinite alternate;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .hero-glow-2 {
+            position: absolute;
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(192,132,252,0.15) 0%, transparent 65%);
+            bottom: -50px; right: -100px;
+            filter: blur(60px);
+            animation: glow-drift-2 15s ease-in-out infinite alternate;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .hero-glow-3 {
+            position: absolute;
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 65%);
+            top: 40%; left: 50%;
+            transform: translateX(-50%);
+            filter: blur(80px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes glow-drift-1 {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(80px, 60px) scale(1.2); }
+        }
+
+        @keyframes glow-drift-2 {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(-60px, -40px) scale(1.15); }
+        }
+
+        /* Gradient horizontal rules */
+        .gradient-divider {
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(56,189,248,0.4), rgba(192,132,252,0.4), transparent);
+            margin: 60px 0;
+        }
+
+        /* Company Ribbon */
+        .company-ribbon {
+            width: 100%;
+            overflow: hidden;
+            margin: 48px 0;
+            mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+            -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+        }
+
+        .company-ribbon .track {
+            display: inline-flex;
+            gap: 0;
+            animation: slide-left 25s linear infinite;
+        }
+
+        .company-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 100px;
+            padding: 8px 20px;
+            margin: 0 10px;
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.6);
+            white-space: nowrap;
+        }
+
+        @keyframes slide-left {
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); }
+        }
+
+        /* Premium Bento Grid */
+        .bento-grid {
+            display: grid;
+            grid-template-columns: 1.6fr 1fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .bento-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 28px;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bento-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 20px;
+            padding: 1px;
+            background: linear-gradient(135deg, transparent, rgba(56,189,248,0.3), transparent);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        .bento-card:hover::before { opacity: 1; }
+
+        .bento-card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(56,189,248,0.2);
+            background: rgba(56,189,248,0.04);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 30px rgba(56,189,248,0.08);
+        }
+
+        .bento-card-large { grid-row: span 2; }
+
+        .bento-icon-box {
+            width: 44px; height: 44px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(56,189,248,0.2), rgba(129,140,248,0.2));
+            border: 1px solid rgba(56,189,248,0.2);
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 20px;
+            color: #38bdf8;
+        }
+
+        /* Stats Row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            overflow: hidden;
+            background: rgba(255,255,255,0.02);
+        }
+
+        .stat-box {
+            padding: 32px 24px;
+            text-align: center;
+            border-right: 1px solid rgba(255,255,255,0.06);
+            position: relative;
+        }
+
+        .stat-box:last-child { border-right: none; }
+
+        .stat-box-value {
+            font-size: 36px;
+            font-weight: 800;
+            font-family: var(--font-display);
+            background: linear-gradient(135deg, #ffffff, #a7f3d0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .stat-box-label {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            letter-spacing: 0.12em;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+        }
+
+        /* Redesign Ambient Backgrounds & Grids */
+        .ambient-glow {
+            position: absolute; width: 800px; height: 800px; 
+            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 60%); 
+            border-radius: 50%; pointer-events: none; z-index: -1;
+            filter: blur(80px);
+            opacity: 0.6;
+            animation: morph 15s ease-in-out infinite alternate;
+        }
+
+        @keyframes morph {
+            0% { border-radius: 50%; transform: scale(1) translate(0, 0); }
+            50% { border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; transform: scale(1.1) translate(20px, -20px); }
+            100% { border-radius: 70% 30% 30% 70% / 70% 70% 30% 30%; transform: scale(0.9) translate(-20px, 20px); }
+        }
+        .trusted-ribbon {
+            width: 100%; overflow: hidden; white-space: nowrap; margin-top: 40px; opacity: 0.5; padding: 20px 0; border-top: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent); -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+        }
+        .trusted-ribbon .track { display: inline-block; animation: scroll-left 30s linear infinite; }
+        .trusted-ribbon span { margin: 0 40px; font-family: var(--font-display); font-size: 14px; font-weight: 800; letter-spacing: 0.1em; color: var(--text-muted); text-transform: uppercase; }
+        @keyframes scroll-left { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        
+        .features-grid {
+            display: grid;
+            grid-template-areas: 
+                "rect arena"
+                "rect reports"
+                "stats stats";
+            grid-template-columns: 1.5fr 1fr;
+            gap: 24px;
+            margin-top: 80px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .feature-card { 
+            padding: 32px; 
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
+        }
+
+        .feature-card:hover { 
+            transform: translateY(-8px) scale(1.02); 
+            border-color: var(--accent); 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 20px var(--accent-glow); 
+            z-index: 10;
+        }
+
+        .feature-icon { width: 48px; height: 48px; border-radius: 12px; background: var(--accent-glow); display: flex; align-items: center; justify-content: center; margin-bottom: 24px; color: var(--accent); transition: transform 0.3s; }
+        .feature-card:hover .feature-icon { transform: rotate(10deg) scale(1.1); }
+        .stats-strip { display: flex; justify-content: space-around; width: 100%; margin-top: 60px; padding: 40px 0; border-top: 1px solid rgba(255,255,255,0.05); }
+        .stat-item { text-align: center; }
+        .stat-item h4 { font-size: 36px; color: white; line-height: 1; margin-bottom: 12px; font-family: var(--font-display); font-weight: 800; }
+        .stat-item p { font-family: var(--font-mono); font-size: 11px; color: var(--accent); letter-spacing: 0.1em; }
+
+        /* General Utilities */
+        header.main-nav {
+            height: 72px;
+            display: flex;
+            align-items: center;
+            padding: 0 40px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(3, 4, 7, 0.85);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            position: sticky;
+            top: 0;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-family: var(--font-sans);
+            font-weight: 700;
+            font-size: 20px;
+            letter-spacing: -0.02em;
+            cursor: pointer;
+        }
+
+        .brand-text {
+            background: linear-gradient(90deg, #a7f3d0 0%, #60a5fa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            margin-left: 60px;
+        }
+
+        .nav-item {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 13px;
+            cursor: pointer;
+            transition: color 0.2s;
+            position: relative;
+            padding: 24px 0;
+        }
+
+        .nav-item:hover, .nav-item.active { color: var(--text); }
+        .nav-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .header-actions {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        /* Buttons */
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 8px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            font-family: var(--font-sans);
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 4px 20px var(--accent-glow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary::after {
+            content: "";
+            position: absolute;
+            top: -50%; left: -50%; width: 200%; height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: rotate(45deg);
+            transition: 0.5s;
+            pointer-events: none;
+        }
+
+        .btn-primary:hover::after {
+            left: 100%;
+            top: 100%;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 25px var(--accent-glow);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            color: white;
+        }
+
+        .btn-secondary:hover { background: rgba(255, 255, 255, 0.1); border-color: var(--border-bright); }
+
+        .btn-outline { background: transparent; border-color: var(--border); color: var(--text-muted); }
+        .btn-outline:hover { border-color: var(--border-bright); color: var(--text); }
+
+        /* Glass Panels */
+        .glass-panel {
+            background: var(--panel);
+            backdrop-filter: blur(24px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+
+        /* Pages */
+        .page {
+            display: none;
+            flex: 1;
+            padding: 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .page.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Dashboard Specifics */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            padding: 24px;
+            position: relative;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            font-family: var(--font-mono);
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 0.1em;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stat-value {
+            font-size: 42px;
+            font-weight: 800;
+            font-family: var(--font-display);
+            line-height: 1;
+        }
+
+        .stat-diff { font-size: 12px; margin-top: 8px; font-weight: 600; }
+        .stat-diff.down { color: var(--success); }
+        .stat-diff.up { color: var(--error); }
+
+        .chart-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .chart-container {
+            padding: 32px;
+            min-height: 480px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+
+        /* Table Design */
+        .data-table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        th { text-align: left; padding: 16px 24px; color: var(--text-muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 1px solid var(--border); }
+        td { padding: 20px 24px; border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: 13px; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: rgba(255, 255, 255, 0.02); }
+
+        .badge {
+            padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; display: inline-flex; align-items: center; gap: 6px;
+        }
+        .badge-verified { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+        .badge-unverified { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+        .badge-hallucination { color: var(--error); background: rgba(239, 68, 68, 0.1); }
+
+        /* Footer Responsive */
+        @media (max-width: 1024px) {
+            footer .footer-content {
+                grid-template-columns: 1fr 1fr !important;
+                gap: 40px !important;
+            }
+        }
+
+        @media (max-width: 640px) {
+            footer .footer-content {
+                grid-template-columns: 1fr !important;
+            }
+            footer .footer-bottom {
+                flex-direction: column !important;
+                gap: 20px !important;
+                text-align: center;
+            }
+        }
+
+        /* Ambient Backgrounds */
+        .ambient-glow { position: absolute; background: radial-gradient(circle, var(--accent) 0%, transparent 70%); filter: blur(60px); z-index: 0; pointer-events: none; }
+        
+        .drag-over {
+            border-color: var(--accent) !important;
+            background: rgba(99, 102, 241, 0.05) !important;
+            box-shadow: inset 0 0 20px rgba(99, 102, 241, 0.1) !important;
+            transition: all 0.3s ease;
+        }
+
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+        /* Login Page */
+        #page-login {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            max-width: 100%;
+            height: 100vh;
+            padding: 0;
+            background: radial-gradient(circle at 50% 50%, #1a1c35 0%, #030407 100%);
+            position: fixed;
+            top: 0; left: 0;
+            z-index: 2000;
+        }
+
+        .login-card {
+            width: 440px;
+            padding: 60px;
+            text-align: center;
+        }
+
+        .login-form { margin-top: 40px; text-align: left; }
+        .form-group { margin-bottom: 24px; }
+        .form-group label { display: block; font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; letter-spacing: 0.05em; }
+        .form-group input { width: 100%; background: #0b0e14; border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; color: white; outline: none; transition: all 0.2s; font-family: var(--font-mono); }
+        .form-group input:focus { border-color: var(--accent); box-shadow: 0 0 15px var(--accent-glow); }
+
+        /* Home Page */
+        #page-home { padding: 0; max-width: 100%; }
+        .hero { display: flex; flex-direction: column; align-items: center; padding: 140px 40px; text-align: center; min-height: 80vh; }
+        .hero-tag { background: rgba(99, 102, 241, 0.1); color: var(--accent); padding: 6px 16px; border-radius: 30px; font-size: 12px; font-weight: 700; margin-bottom: 32px; text-transform: uppercase; letter-spacing: 0.1em; border: 1px solid var(--accent-glow); }
+        .hero h1 { font-size: 96px; line-height: 0.95; margin-bottom: 32px; letter-spacing: -0.05em; }
+        .hero h1 span { color: var(--accent); text-shadow: 0 0 50px var(--accent-glow); }
+        .hero p { font-size: 18px; color: var(--text-muted); max-width: 700px; margin-bottom: 48px; font-weight: 500; }
+
+        .terminal-mockup {
+            width: 100%; max-width: 1000px; margin: 0 auto; height: 560px;
+            background: #0b0e14; border: 1px solid var(--border-bright); border-radius: 12px;
+            box-shadow: 0 50px 100px rgba(0,0,0,0.8); overflow: hidden; text-align: left;
+        }
+        .terminal-header { background: #161b22; padding: 14px 20px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); }
+        .terminal-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .term-red { background: #ff5f57; } .term-yel { background: #ffbd2e; } .term-grn { background: #28c940; }
+        .terminal-body { padding: 32px; font-family: var(--font-mono); font-size: 13px; line-height: 1.8; color: #e6edf3; overflow-y: auto; height: calc(100% - 40px); }
+        .term-cursor { display: inline-block; width: 8px; height: 18px; background: var(--accent); vertical-align: middle; animation: blink 1s step-end infinite; }
+
+        /* Scanner Component */
+        .scanner-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; min-height: 600px; margin-top: 24px; }
+        .canvas-box { display: flex; flex-direction: column; height: 100%; }
+        .canvas-header { padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+        .canvas-body { flex: 1; padding: 0; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+        .editor-container { flex: 1; padding: 24px; font-family: var(--font-mono); overflow-y: auto; line-height: 1.8; }
+        .scanner-textarea { width: 100%; height: 100%; background: transparent; border: none; outline: none; color: #e6edf3; resize: none; font-family: var(--font-mono); font-size: 14px; }
+
+        /* AI Assistant */
+        .ai-assistant-card {
+            position: absolute; bottom: 32px; right: 32px; width: 340px;
+            padding: 24px; border: 1px solid var(--accent);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6), 0 0 30px var(--accent-glow);
+            z-index: 100; animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* Settings Grid */
+        .settings-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 32px; }
+        .config-card { padding: 32px; height: 100%; }
+        .diagnostic-log { background: #030407; border-radius: 8px; padding: 20px; font-family: var(--font-mono); font-size: 11px; line-height: 2; color: var(--text-muted); height: 400px; overflow-y: auto; border: 1px solid var(--border); }
+    </style>
+    <script>
+        function handleLogoError(img) {
+            img.style.display = 'none';
+            const fallback = img.nextElementSibling;
+            if (fallback) fallback.style.display = 'flex';
+        }
+    </script>
+</head>
+<body>
+
+<div class="app-container">
+    <!-- TOP NAVIGATION -->
+    <header class="main-nav" id="main-nav" style="display:none">
+        <div class="brand" onclick="navigate('home')">
+            <img src="logo.png" alt="Auditrail Logo" style="height: 44px; width: auto; object-fit: contain;" onerror="handleLogoError(this)">
+            <div class="logo-fallback" style="display: none; align-items: center; gap: 12px;">
+                <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="25" y="15" width="35" height="45" rx="4" fill="#0c4a6e" />
+                    <rect x="35" y="25" width="35" height="45" rx="4" fill="#075985" />
+                    <rect x="45" y="35" width="35" height="45" rx="4" fill="#0369a1" />
+                    <circle cx="65" cy="50" r="3" fill="#fbbf24" />
+                    <circle cx="72" cy="58" r="3" fill="#10b981" />
+                    <circle cx="45" cy="45" r="28" fill="#1e293b" stroke="#38bdf8" stroke-width="3" />
+                    <path d="M65 65L85 85" stroke="#38bdf8" stroke-width="6" stroke-linecap="round" />
+                </svg>
+                <span class="brand-text">Auditrail</span>
+            </div>
+        </div>
+        <nav class="nav-links">
+            <div class="nav-item active" data-nav="dashboard" onclick="navigate('dashboard')">Dashboard</div>
+            <div class="nav-item" data-nav="scanner" onclick="navigate('scanner')">Scanner</div>
+            <div class="nav-item" data-nav="arena" onclick="navigate('arena')">Arena</div>
+            <div class="nav-item" data-nav="reports" onclick="navigate('reports')">Reports</div>
+            <div class="nav-item" data-nav="security" onclick="navigate('security')">Security</div>
+        </nav>
+        <div class="header-actions">
+            <div class="mono" id="query-status" style="font-size: 11px; color: var(--text-muted); opacity: 0.6;">QUERY_SYSTEM_READY</div>
+            <div style="width: 1px; height: 24px; background: var(--border);"></div>
+            <!-- Profile Dropdown -->
+            <div style="position: relative;" id="profile-menu-wrapper">
+                <div style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 4px 8px; border-radius: 10px; transition: background 0.2s;" onclick="toggleProfileMenu()" onmouseenter="this.style.background='rgba(255,255,255,0.05)'" onmouseleave="this.style.background='transparent'">
+                    <div style="text-align: right;">
+                        <div id="nav-username" style="font-size: 13px; font-weight: 600; color: white; line-height: 1.2;"></div>
+                        <div id="nav-useremail" style="font-size: 10px; color: var(--text-muted); font-family: var(--font-mono); opacity: 0.7;"></div>
+                    </div>
+                    <div id="nav-avatar" style="width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #38bdf8, #60a5fa); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; color: white; flex-shrink: 0; box-shadow: 0 0 12px rgba(56,189,248,0.35);"></div>
+                </div>
+                <!-- Dropdown Panel -->
+                <div id="profile-dropdown" style="display: none; position: absolute; right: 0; top: calc(100% + 12px); width: 220px; background: #0f1117; border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 8px; z-index: 9999; box-shadow: 0 20px 50px rgba(0,0,0,0.6); backdrop-filter: blur(20px);">
+                    <div style="padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.07); margin-bottom: 6px;">
+                        <div id="dropdown-name" style="font-size: 14px; font-weight: 700; color: white; margin-bottom: 2px;"></div>
+                        <div id="dropdown-email" style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);"></div>
+                    </div>
+                    <div onclick="navigate('dashboard')" style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; color: var(--text-muted); transition: all 0.2s;" onmouseenter="this.style.background='rgba(255,255,255,0.05)'; this.style.color='white'" onmouseleave="this.style.background=''; this.style.color='var(--text-muted)'">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                        Dashboard
+                    </div>
+                    <div onclick="navigate('security')" style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; color: var(--text-muted); transition: all 0.2s;" onmouseenter="this.style.background='rgba(255,255,255,0.05)'; this.style.color='white'" onmouseleave="this.style.background=''; this.style.color='var(--text-muted)'">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        Security Settings
+                    </div>
+                    <div style="height: 1px; background: rgba(255,255,255,0.07); margin: 6px 0;"></div>
+                    <div onclick="doLogout()" style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; color: #ef4444; transition: all 0.2s;" onmouseenter="this.style.background='rgba(239,68,68,0.08)'" onmouseleave="this.style.background=''">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                        Sign Out
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ACCESS GATEWAY (LOGIN) -->
+    <section id="page-login" class="page">
+        <div class="login-card glass-panel">
+            <img src="logo.png" alt="Auditrail Brand" style="width: 120px; height: auto; margin-bottom: 24px;" onerror="handleLogoError(this)">
+            <div class="logo-fallback" style="display: none; flex-direction: column; align-items: center; margin-bottom: 24px;">
+                <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="25" y="15" width="35" height="45" rx="4" fill="#0c4a6e" />
+                    <rect x="35" y="25" width="35" height="45" rx="4" fill="#075985" />
+                    <rect x="45" y="35" width="35" height="45" rx="4" fill="#0369a1" />
+                    <circle cx="65" cy="50" r="3" fill="#fbbf24" />
+                    <circle cx="72" cy="58" r="3" fill="#10b981" />
+                    <circle cx="45" cy="45" r="28" fill="#1e293b" stroke="#38bdf8" stroke-width="3" />
+                    <path d="M65 65L85 85" stroke="#38bdf8" stroke-width="6" stroke-linecap="round" />
+                </svg>
+                <span class="brand-text" style="font-size: 28px; margin-top: 16px;">Auditrail</span>
+            </div>
+            <h1 style="font-size: 28px; margin-bottom: 8px;" id="auth-title">Access Gateway</h1>
+            <p style="color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em;" id="auth-subtitle">Enter your credentials to proceed</p>
+            
+            <div class="login-form">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="auth-email" value="admin@terminal.sys">
+                </div>
+                <div class="form-group">
+                    <label>Password <span style="float: right; opacity: 0.5; cursor: pointer;">Forgot?</span></label>
+                    <input type="password" id="auth-pass" value="••••••••">
+                </div>
+                <div class="form-group" id="confirm-pass-card" style="display: none;">
+                    <label>Confirm Password</label>
+                    <input type="password" id="auth-confirm-pass" value="••••••••">
+                </div>
+                <button class="btn btn-primary" id="auth-submit-btn" style="width: 100%; padding: 14px; margin-top: 12px;" onclick="doAuthAction()">Initialize Session</button>
+                
+                <div style="margin: 24px 0; text-align: center;">
+                   <span style="color: var(--text-muted); font-size: 13px;">
+                      <span id="toggle-hint">Don't have an account?</span> 
+                      <a href="javascript:void(0)" onclick="toggleAuthMode()" id="auth-toggle-link" style="color: var(--accent); font-weight: 700; text-decoration: none; margin-left: 4px;">Sign Up</a>
+                   </span>
+                </div>
+
+                <div style="margin: 24px 0; text-align: center; position: relative;">
+                    <div style="position: absolute; top: 10px; width: 100%; height: 1px; background: var(--border);"></div>
+                    <span style="position: relative; background: var(--surface); padding: 0 16px; color: var(--text-muted); font-size: 11px;">OR</span>
+                </div>
+                <button class="btn btn-secondary" style="width: 100%; padding: 14px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" style="margin-right: 12px;"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                    Authenticate via Google
+                </button>
+            </div>
+            <p class="mono" style="margin-top: 40px; font-size: 9px; opacity: 0.3;">UNAUTHORIZED ACCESS IS STRICTLY PROHIBITED</p>
+        </div>
+    </section>
+
+    <!-- LANDING PAGE (HOME) -->
+    <section id="page-home" class="page" style="padding: 0; max-width: 100%;">
+        <!-- Hero Section -->
+        <div class="home-hero">
+            <div class="hero-glow-1"></div>
+            <div class="hero-glow-2"></div>
+            <div class="hero-glow-3"></div>
+
+            <!-- Status Badge -->
+            <div class="glow-badge reveal">
+                <span style="width: 7px; height: 7px; background: #10b981; border-radius: 50%; display: inline-block; box-shadow: 0 0 8px #10b981;"></span>
+                ALL SYSTEMS OPERATIONAL &nbsp;·&nbsp; v2.4.0
+            </div>
+
+            <!-- Logo -->
+            <div class="reveal reveal-delay-1" style="margin: 28px 0;">
+                <img src="logo.png" alt="Auditrail" style="width: 160px; height: auto; filter: drop-shadow(0 0 40px rgba(56,189,248,0.4));" onerror="handleLogoError(this)">
+                <div class="logo-fallback" style="display:none; flex-direction:column; align-items:center;">
+                    <svg width="100" height="100" viewBox="0 0 100 100" fill="none">
+                        <rect x="25" y="15" width="35" height="45" rx="4" fill="#0c4a6e" />
+                        <rect x="35" y="25" width="35" height="45" rx="4" fill="#075985" />
+                        <rect x="45" y="35" width="35" height="45" rx="4" fill="#0369a1" />
+                        <circle cx="45" cy="45" r="28" fill="#1e293b" stroke="#38bdf8" stroke-width="3" />
+                        <path d="M65 65L85 85" stroke="#38bdf8" stroke-width="6" stroke-linecap="round" />
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Headline -->
+            <div class="reveal reveal-delay-2" style="position: relative; z-index: 1;">
+                <h1 style="font-family: var(--font-display); font-weight: 800; font-size: clamp(40px, 5.5vw, 72px); line-height: 1.05; letter-spacing: -0.03em; margin-bottom: 24px;">
+                    <span style="color: #ffffff;">Secure the </span><span class="hero-gradient-text">Intelligent Edge</span>
+                </h1>
+                <p style="font-size: clamp(16px, 2vw, 20px); max-width: 580px; margin: 0 auto 40px; color: #94a3b8; line-height: 1.65; font-weight: 400;">Autonomous AI hallucination detection, real‑time fact correction, and enterprise‑grade audit reporting — all in one platform.</p>
+            </div>
+
+            <!-- CTA Buttons -->
+            <div class="reveal reveal-delay-3" style="display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; position: relative; z-index: 1;">
+                <button class="btn btn-primary" onclick="navigate('scanner')" style="padding: 14px 36px; font-size: 15px; border-radius: 12px; font-weight: 700; letter-spacing: 0.02em;">Get Started →</button>
+                <button class="btn btn-secondary" onclick="navigate('docs')" style="padding: 14px 36px; font-size: 15px; border-radius: 12px; font-weight: 600;">DOCUMENTATION</button>
+            </div>
+
+            <!-- Company Ribbon -->
+            <div class="company-ribbon reveal reveal-delay-4" style="position: relative; z-index: 1;">
+                <p style="text-align: center; font-size: 11px; letter-spacing: 0.12em; color: rgba(255,255,255,0.25); margin-bottom: 16px; font-family: var(--font-mono);">TRUSTED BY ENTERPRISE TEAMS</p>
+                <div class="track">
+                    <span class="company-pill">🔐 ACME Corp</span>
+                    <span class="company-pill">🏢 Globex Tech</span>
+                    <span class="company-pill">⚙️ Cyberdyne Systems</span>
+                    <span class="company-pill">🌐 Initech</span>
+                    <span class="company-pill">🔬 Massive Dynamic</span>
+                    <span class="company-pill">🚀 Hooli</span>
+                    <span class="company-pill">🔐 ACME Corp</span>
+                    <span class="company-pill">🏢 Globex Tech</span>
+                    <span class="company-pill">⚙️ Cyberdyne Systems</span>
+                    <span class="company-pill">🌐 Initech</span>
+                    <span class="company-pill">🔬 Massive Dynamic</span>
+                    <span class="company-pill">🚀 Hooli</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gradient Divider -->
+        <div class="gradient-divider"></div>
+
+        <!-- Stats Row -->
+        <div style="padding: 0 40px; margin-bottom: 60px;">
+            <div class="stats-row reveal">
+                <div class="stat-box">
+                    <div class="stat-box-value">12M+</div>
+                    <div class="stat-box-label">Tokens Scanned</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-box-value">99.9%</div>
+                    <div class="stat-box-label">Flag Accuracy</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-box-value">&lt;40ms</div>
+                    <div class="stat-box-label">Avg. Latency</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-box-value" style="background: linear-gradient(135deg, #10b981, #34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">0</div>
+                    <div class="stat-box-label">Critical Breaches</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature Bento Grid -->
+        <div style="padding: 0 40px 80px;">
+            <div style="text-align: center; margin-bottom: 48px;" class="reveal">
+                <p style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.15em; color: #38bdf8; margin-bottom: 12px;">CORE CAPABILITIES</p>
+                <h2 style="font-size: clamp(28px, 3.5vw, 42px); font-weight: 800; color: white; letter-spacing: -0.02em;">Everything you need to<br><span class="hero-gradient-text">audit AI at scale</span></h2>
+            </div>
+
+            <div class="bento-grid reveal reveal-delay-1">
+                <!-- Big Card: Autonomous Rectification -->
+                <div class="bento-card bento-card-large">
+                    <div class="bento-icon-box">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72Z"/><path d="m14 7 3 3"/></svg>
+                    </div>
+                    <h3 style="font-size: 22px; font-weight: 700; color: white; margin-bottom: 12px;">Autonomous Rectification</h3>
+                    <p style="font-size: 14px; color: #94a3b8; line-height: 1.7; margin-bottom: 28px;">Our neural heuristics instantly detect and rewrite LLM hallucinations across vast document streams. Zero human intervention, 100% data fidelity.</p>
+                    <!-- Mini Terminal Preview -->
+                    <div style="background: #060810; border: 1px solid rgba(56,189,248,0.15); border-radius: 12px; padding: 20px; font-family: var(--font-mono); font-size: 11px; line-height: 2;">
+                        <div style="color: #475569; margin-bottom: 4px;"># AUDIT RUN — protocol_delta_v4.txt</div>
+                        <div style="color: #38bdf8;">→ Scanning 1,247 claims...</div>
+                        <div style="color: #f59e0b;">⚠ WARN  Hallucination detected in SEQ_04</div>
+                        <div style="color: #10b981;">✓ AUTO  Rectified: confidence 97.2%</div>
+                        <div style="color: #10b981;">✓ DONE  Report saved to /reports/delta-v4.tx</div>
+                    </div>
+                </div>
+
+                <!-- Arena Card -->
+                <div class="bento-card">
+                    <div class="bento-icon-box" style="background: linear-gradient(135deg, rgba(192,132,252,0.2), rgba(129,140,248,0.2)); border-color: rgba(192,132,252,0.2); color: #c084fc;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>
+                    </div>
+                    <h3 style="font-size: 18px; font-weight: 700; color: white; margin-bottom: 10px;">Multi‑Model Arena</h3>
+                    <p style="font-size: 13px; color: #94a3b8; line-height: 1.6;">Benchmark GPT‑4, Claude 3, and Llama side‑by‑side against your compliance data.</p>
+                    <div style="display: flex; gap: 8px; margin-top: 20px;">
+                        <span style="background: rgba(129,140,248,0.15); border: 1px solid rgba(129,140,248,0.2); border-radius: 8px; padding: 4px 10px; font-size: 11px; font-family: var(--font-mono); color: #818cf8;">GPT-4</span>
+                        <span style="background: rgba(192,132,252,0.15); border: 1px solid rgba(192,132,252,0.2); border-radius: 8px; padding: 4px 10px; font-size: 11px; font-family: var(--font-mono); color: #c084fc;">Claude</span>
+                        <span style="background: rgba(56,189,248,0.15); border: 1px solid rgba(56,189,248,0.2); border-radius: 8px; padding: 4px 10px; font-size: 11px; font-family: var(--font-mono); color: #38bdf8;">Llama</span>
+                    </div>
+                </div>
+
+                <!-- Security Card -->
+                <div class="bento-card">
+                    <div class="bento-icon-box" style="background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(56,189,248,0.2)); border-color: rgba(16,185,129,0.2); color: #10b981;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    </div>
+                    <h3 style="font-size: 18px; font-weight: 700; color: white; margin-bottom: 10px;">Enterprise Security</h3>
+                    <p style="font-size: 13px; color: #94a3b8; line-height: 1.6;">Zero-breach architecture with full audit trails, role‑based access, and SOC-2 compliance.</p>
+                    <div style="margin-top: 20px; background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.15); border-radius: 10px; padding: 10px 14px;">
+                        <span style="font-family: var(--font-mono); font-size: 10px; color: #10b981; letter-spacing: 0.08em;">● SECURE · SOC-2 COMPLIANT</span>
+                    </div>
+                </div>
+
+                <!-- Reporting Card -->
+                <div class="bento-card">
+                    <div class="bento-icon-box" style="background: linear-gradient(135deg, rgba(245,158,11,0.2), rgba(251,191,36,0.2)); border-color: rgba(245,158,11,0.2); color: #f59e0b;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    </div>
+                    <h3 style="font-size: 18px; font-weight: 700; color: white; margin-bottom: 10px;">Rich Reporting</h3>
+                    <p style="font-size: 13px; color: #94a3b8; line-height: 1.6;">Cryptographic .tx export snapshots of your entire audit posture — one click, always ready.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- DASHBOARD -->
+    <section id="page-dashboard" class="page">
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px;">
+            <div>
+                <div class="mono" style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">LIVE CONNECTION: EST. // ID: 0x992_AUDIT_INF</div>
+                <h2 style="font-size: 36px;">SECURITY OVERVIEW</h2>
+            </div>
+            <div style="display: flex; gap: 16px;">
+                <button class="btn btn-secondary" style="font-size: 12px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> EXPORT_LOG</button>
+                <button class="btn btn-primary" style="font-size: 12px; padding: 10px 24px;" onclick="navigate('scanner')">INIT_NEW_SCAN</button>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card glass-panel">
+                <div class="stat-label">AVG. HALLUCINATION RATE <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M3 12h1m8-9v1m8 8h1m-9 8v1M5.6 5.6l.7.7m12.1-.7-.7.7m0 11.4.7.7m-12.1-.7-.7.7"/></svg></div>
+                <div class="stat-value" id="dashboard-hallucination-rate">1.82%</div>
+                <div class="stat-diff down">↓ 0.4%</div>
+            </div>
+            <div class="stat-card glass-panel" style="grid-column: span 2;">
+                <div class="stat-label">LIVE SECURITY FEED <div class="status-dot" style="background: var(--accent); animation: pulse 2s infinite;"></div> <span style="margin-left:auto; opacity: 0.5;">0x992_LINK_ACTIVE</span></div>
+                <div id="live-security-feed" class="mono" style="font-size: 10px; color: var(--text-muted); height: 80px; overflow: hidden; line-height: 1.8;">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+        </div>
+
+        <style>
+            @keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
+        </style>
+
+        <div class="chart-row">
+            <div class="chart-container glass-panel">
+                <div class="chart-header">
+                    <h3>AUDIT HISTORY STREAM</h3>
+                    <div style="display: flex; gap: 20px;">
+                        <div style="display: flex; align-items: center; gap: 8px; font-size: 10px; color: var(--text-muted);">
+                            <div class="status-dot" style="background: var(--accent);"></div> CONSISTENCY
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px; font-size: 10px; color: var(--text-muted);">
+                            <div class="status-dot" style="background: #a855f7;"></div> RISK_FACTOR
+                        </div>
+                    </div>
+                </div>
+                <div style="flex: 1; position: relative;">
+                    <canvas id="historyChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container glass-panel">
+                <div class="chart-header">
+                    <h3>MODEL_BIOMETRICS</h3>
+                </div>
+                <div style="flex: 1; position: relative;">
+                    <canvas id="radarChart"></canvas>
+                </div>
+                <div style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px; display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 11px;">
+                        <span style="color: var(--text-muted);">PRIMARY ENDPOINT</span>
+                        <span class="mono">AUD_GPT_4_TURBO</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 11px;">
+                        <span style="color: var(--text-muted);">LATENCY THRESHOLD</span>
+                        <span class="mono" style="color: var(--error);">CRITICAL 85%</span>
+                    </div>
+                    <div style="height: 4px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;">
+                        <div style="width: 85%; height: 100%; background: var(--error);"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel" style="margin-top: 24px;">
+            <div class="canvas-header" style="justify-content: space-between;">
+                <h3>RECENT AUDIT LOGS</h3>
+                <div class="mono" style="font-size: 11px; color: var(--text-muted); cursor: pointer;">VIEW_ALL_LOGS / CLEAN_BUFFER</div>
+            </div>
+            <div class="data-table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>SESSION_ID</th>
+                            <th>ENDPOINT_MODEL</th>
+                            <th>STATUS</th>
+                            <th style="text-align: right;">INTEGRITY_SCORE</th>
+                        </tr>
+                    </thead>
+                    <tbody id="audit-table-body">
+                        <!-- Filled by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- SCANNER -->
+    <section id="page-scanner" class="page">
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 32px;">
+            <div>
+                <div class="mono" style="font-size: 10px; color: var(--text-muted); margin-bottom: 4px;">SYSTEM LIVE // UUID: AX-2940-DELTA</div>
+                <h2 style="font-size: 32px;">Execution Canvas</h2>
+            </div>
+            <div style="display: flex; gap: 16px; align-items: center;">
+                <div class="mono" style="font-size: 10px; color: var(--text-muted);">ENGINE</div>
+                <div class="glass-panel" style="padding: 4px; display: flex; border-radius: 8px;">
+                    <select id="engine-select" style="background: transparent; color: white; border: none; font-size: 10px; padding: 4px; outline: none; cursor: pointer; font-family: var(--font-mono);">
+                        <option value="anthropic" style="background: #030407;">CLOUD (ANTHROPIC)</option>
+                        <option value="ollama" style="background: #030407;">LOCAL (OLLAMA)</option>
+                    </select>
+                </div>
+                <div class="mono" style="font-size: 10px; color: var(--text-muted); margin-left: 12px;">AUDIT MODE</div>
+                <div class="glass-panel" style="padding: 4px; display: flex; border-radius: 8px;">
+                    <select id="audit-mode-select" style="background: transparent; color: white; border: none; font-size: 10px; padding: 4px; outline: none; cursor: pointer; font-family: var(--font-mono);">
+                        <option value="strict" style="background: #030407;">PROFESSIONAL MODE</option>
+                        <option value="standard" style="background: #030407;">STANDARD MODE</option>
+                        <option value="lenient" style="background: #030407;">LENIENT MODE</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" style="padding: 10px 24px;" onclick="runAudit()" id="run-audit-btn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 8px;"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    EXECUTE AUDIT
+                </button>
+            </div>
+        </div>
+
+        <div class="scanner-layout">
+            <div class="canvas-box glass-panel" id="scanner-drop-zone">
+                <div class="canvas-header">
+                    <div class="mono" style="font-size: 12px; font-weight: 700; color: var(--text-muted);">INPUT DOCUMENT</div>
+                    <div class="header-actions" style="margin-left:auto;">
+                        <button class="btn btn-outline" style="padding: 4px 12px; font-size: 10px;" onclick="document.getElementById('file-upload-input').click()">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                            UPLOAD_FILE
+                        </button>
+                        <input type="file" id="file-upload-input" style="display:none" onchange="handleFileUpload(event)" accept=".txt,.md,.json,.csv,.log,.js,.py,.pdf">
+                    </div>
+                </div>
+                <div class="canvas-body">
+                    <div style="padding: 12px 24px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; background: rgba(255,255,255,0.02); align-items: center;">
+                        <div class="terminal-dot term-red" style="width: 8px; height: 8px;"></div>
+                        <div class="terminal-dot term-yel" style="width: 8px; height: 8px;"></div>
+                        <div class="terminal-dot term-grn" style="width: 8px; height: 8px;"></div>
+                        <span class="mono" id="uploaded-filename" style="font-size: 10px; color: var(--text-muted); margin-left: 8px;">quantum_protocol_v2.txt</span>
+                    </div>
+                    <div class="editor-container">
+                        <textarea class="scanner-textarea" id="scanner-input"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="canvas-box glass-panel">
+                <div class="canvas-header">
+                    <div class="mono" style="font-size: 12px; font-weight: 700; color: var(--text-muted);">CORRECTED OUTPUT</div>
+                    <div class="header-actions" style="margin-left:auto; display:flex; align-items:center; gap: 12px;">
+                        <div class="mono" style="font-size: 11px; color: var(--accent); opacity: 0.8;">[ AUTONOMOUS_REWRITE_MODE ]</div>
+                        <button class="btn btn-outline" style="padding: 4px 12px; font-size: 10px; border-color: var(--accent); color: var(--accent);" onclick="downloadCorrectedDocument()">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                            DOWNLOAD .TX
+                        </button>
+                    </div>
+                </div>
+                <div class="canvas-body" style="background: rgba(99, 102, 241, 0.02);">
+                    <div class="editor-container mono" style="font-size: 13px; color: #e6edf3;" id="corrected-output-container">
+                        <div style="text-align: center; padding: 100px 0; opacity: 0.3;">
+                            [ AWAITING_AUDIT_EXECUTION ]
+                        </div>
+                    </div>
+                    
+                    <div class="ai-assistant-card glass-panel" id="ai-assistant" style="display: none;">
+                        <div class="mono" style="font-size: 10px; color: var(--accent); margin-bottom: 12px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                            AI AUDIT ASSISTANT
+                        </div>
+                        <p style="font-size: 12px; color: var(--text-muted); line-height: 1.6; margin-bottom: 20px;">System detected a 55% delta between Summary Line 004 and Reference Database REF_03. Should I flag this as a 'Hard Hallucination'?</p>
+                        <div style="display: flex; gap: 12px;">
+                            <button class="btn btn-primary" style="padding: 8px 16px; font-size: 11px;" onclick="confirmFlag()">CONFIRM FLAG</button>
+                            <button class="btn btn-outline" style="padding: 8px 16px; font-size: 11px;" onclick="ignoreFlag()">IGNORE</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-grid" style="margin-top: 32px; grid-template-columns: repeat(5, 1fr);">
+            <div class="stat-card glass-panel">
+                <div class="stat-label">HALLUCINATION RATE</div>
+                <div style="display: flex; align-items: flex-end; gap: 12px;">
+                    <div class="stat-value" id="scanner-hallucination-rate" style="color: var(--accent);">--%</div>
+                </div>
+            </div>
+            <div class="stat-card glass-panel">
+                <div class="stat-label">SCAN CONFIDENCE</div>
+                <div style="display: flex; align-items: flex-end; gap: 12px;">
+                    <div class="stat-value" id="scan-conf">99.4%</div>
+                    <div style="display: flex; gap: 3px; align-items: flex-end; height: 28px; margin-bottom: 8px;">
+                        <div style="width: 4px; height: 30%; background: var(--border);"></div>
+                        <div style="width: 4px; height: 60%; background: var(--border);"></div>
+                        <div style="width: 4px; height: 90%; background: var(--accent);"></div>
+                        <div style="width: 4px; height: 100%; background: var(--accent);"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card glass-panel">
+                <div class="stat-label">ANOMALIES DETECTED</div>
+                <div style="display: flex; align-items: flex-end; gap: 12px;">
+                    <div class="stat-value" style="color: var(--warning);" id="scan-anom">03</div>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2.5" style="margin-bottom: 10px;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                </div>
+            </div>
+            <div class="stat-card glass-panel">
+                <div class="stat-label">LATENCY INDEX</div>
+                <div class="stat-value">142ms</div>
+                <div class="mono" style="font-size: 10px; color: var(--success); margin-top: 8px;">OPTIMIZED</div>
+            </div>
+            <div class="stat-card glass-panel">
+                <div class="stat-label">CORE INTEGRITY</div>
+                <div class="stat-value" style="color: var(--success);">STABLE</div>
+                <div style="display: flex; gap: 6px; margin-top: 14px;">
+                    <div class="status-dot" style="background: white;"></div>
+                    <div class="status-dot" style="background: white;"></div>
+                    <div class="status-dot" style="background: white;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 48px;" id="scanner-content-to-export">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
+                <h3 style="font-size: 20px; margin-bottom: 0;">Audit Log // Discrepancy Analysis</h3>
+                <button class="btn btn-secondary" style="font-size: 10px; padding: 6px 16px;" onclick="exportReportPDF('scanner-content-to-export')">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                    EXPORT PDF
+                </button>
+            </div>
+            <div class="glass-panel data-table-container" style="border-radius: 12px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>IDENTIFIER</th>
+                            <th>DETECTED FACT</th>
+                            <th>CORRECTION SUGGESTION</th>
+                            <th>CONFIDENCE SCORE</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="discrepancy-body">
+                        <!-- Filled by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- ARENA PAGE -->
+    <section id="page-arena" class="page">
+        <div style="margin-bottom: 32px;">
+            <div class="mono" style="font-size: 10px; color: var(--text-muted); margin-bottom: 4px;">MULTI-MODEL BENCHMARK</div>
+            <h2 style="font-size: 32px;">Arena Match</h2>
+        </div>
+        
+        <div class="glass-panel" style="padding: 24px; margin-bottom: 32px;">
+            <div style="display: flex; gap: 16px;">
+                <input type="text" id="arena-input" class="scanner-textarea" style="flex: 1; height: 48px; background: rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; font-size: 14px;" value="Quantum computing relies on superposition and was invented by Marie Curie in 1889." placeholder="Enter claim to test..."/>
+                <button class="btn btn-primary" onclick="runArenaRace()" id="arena-btn" style="padding: 0 32px;">INITIATE RACE</button>
+            </div>
+        </div>
+
+        <div class="stats-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+            <!-- GPT-4 -->
+            <div class="glass-panel" style="padding: 24px;" id="arena-gpt">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 16px;">
+                    <h3 style="font-size: 18px;">GPT-4o</h3>
+                    <div class="status-dot term-red"></div>
+                </div>
+                <div class="mono" style="font-size: 11px; opacity: 0.5;">LATENCY: <span class="val">--</span></div>
+                <div class="mono" style="font-size: 11px; opacity: 0.5; margin-bottom: 16px;">STATUS: <span class="stat">IDLE</span></div>
+                <div style="font-size: 13px; line-height: 1.6;" class="content">Waiting for race initiation...</div>
+            </div>
+            <!-- Claude -->
+            <div class="glass-panel" style="padding: 24px;" id="arena-claude">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 16px;">
+                    <h3 style="font-size: 18px;">Claude 3.5 Sonnet</h3>
+                    <div class="status-dot term-red"></div>
+                </div>
+                <div class="mono" style="font-size: 11px; opacity: 0.5;">LATENCY: <span class="val">--</span></div>
+                <div class="mono" style="font-size: 11px; opacity: 0.5; margin-bottom: 16px;">STATUS: <span class="stat">IDLE</span></div>
+                <div style="font-size: 13px; line-height: 1.6;" class="content">Waiting for race initiation...</div>
+            </div>
+            <!-- Llama 3 -->
+            <div class="glass-panel" style="padding: 24px;" id="arena-llama">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 16px;">
+                    <h3 style="font-size: 18px;">Llama 3 70B (Local)</h3>
+                    <div class="status-dot term-red"></div>
+                </div>
+                <div class="mono" style="font-size: 11px; opacity: 0.5;">LATENCY: <span class="val">--</span></div>
+                <div class="mono" style="font-size: 11px; opacity: 0.5; margin-bottom: 16px;">STATUS: <span class="stat">IDLE</span></div>
+                <div style="font-size: 13px; line-height: 1.6;" class="content">Waiting for race initiation...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- REPORTS ARCHIVE -->
+    <section id="page-reports" class="page">
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px;">
+            <div>
+                <div class="mono" style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">ARCHIVE_QUERY: SELECT * FROM AUDITS</div>
+                <h2 style="font-size: 36px;">AUDIT ARCHIVE</h2>
+            </div>
+            <div class="glass-panel" style="padding: 4px; display: flex; border-radius: 8px;">
+                <div class="btn" style="background: rgba(255,255,255,0.05); font-size: 11px; padding: 6px 20px;">LAST 30 DAYS</div>
+            </div>
+        </div>
+
+        <div class="glass-panel data-table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>REPORT_INDEX</th>
+                        <th>TARGET_MODEL</th>
+                        <th>SCAN_DATE</th>
+                        <th>HALLUCINATION_RATE</th>
+                        <th style="text-align: right;">STATUS</th>
+                    </tr>
+                </thead>
+                <tbody id="reports-archive-body">
+                    <!-- Populated from LocalStorage -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div id="no-reports-hint" style="text-align: center; padding: 100px 0; display: none;">
+            <div class="mono" style="color: var(--text-muted); opacity: 0.3; margin-bottom: 20px;">[ NO_LOGS_FOUND_IN_BUFFER ]</div>
+            <button class="btn btn-primary" onclick="navigate('scanner')">EXECUTE NEW AUDIT</button>
+        </div>
+    </section>
+    <section id="page-security" class="page">
+        <div style="margin-bottom: 40px;">
+            <h2 style="font-size: 32px;">Security Configuration</h2>
+            <p style="color: var(--text-muted);">Configure backend endpoints, API authentication, and heart-beat monitoring.</p>
+        </div>
+
+        <div class="settings-grid">
+            <div class="glass-panel config-card" style="background: rgba(3, 4, 7, 0.5);">
+                <div class="stat-label" style="margin-bottom: 24px;">DIAGNOSTIC OUTPUT <div class="status-dot" style="background: var(--accent);"></div></div>
+                <div class="diagnostic-log" id="diag-log">
+                    <!-- Dynamic logs here -->
+                </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 24px;">
+                <div class="glass-panel config-card">
+                    <div class="stat-label" style="margin-bottom: 32px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg> API CONFIGURATION</div>
+                    
+                    <div class="form-group">
+                        <label>GROQ API KEY <span class="badge" style="background: rgba(245, 158, 11, 0.1); color: var(--warning); float: right;">Required</span></label>
+                        <div style="display: flex; gap: 16px;">
+                            <input type="password" value="gsk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" style="flex: 1;">
+                            <button class="btn btn-secondary" onclick="testConnection('GROQ_CLUSTER')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Test Connection</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>OLLAMA LOCAL ENDPOINT <span class="badge" style="background: rgba(99, 102, 241, 0.1); color: var(--accent); float: right;">Localhost</span></label>
+                        <div style="display: flex; gap: 16px;">
+                            <input type="text" value="http://127.0.0.1:11434" style="flex: 1;">
+                            <button class="btn btn-secondary" onclick="testConnection('OLLAMA_LOCAL')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Test Connection</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel config-card">
+                    <div class="stat-label" style="margin-bottom: 32px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;"><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg> EXECUTION PREFERENCES</div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
+                        <div class="form-group">
+                            <label>PRIMARY AUDIT MODEL</label>
+                            <div style="position: relative;">
+                                <select style="width: 100%; background: #0b0e14; border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; color: white; appearance: none; font-family: var(--font-mono); cursor: pointer;">
+                                    <option>mixtral-8x7b-32768 (Groq)</option>
+                                    <option>llama-3-70b-preview (Groq)</option>
+                                    <option>llama-3-8b-8192 (Groq)</option>
+                                </select>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="position: absolute; right: 16px; top: 18px; pointer-events: none;"><path d="m6 9 6 6 6-6"/></svg>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>CREATIVITY / TEMPERATURE <span style="float: right;">0.2</span></label>
+                            <input type="range" min="0" max="1" step="0.1" value="0.2" style="width: 100%; height: 6px; margin-top: 18px; accent-color: var(--accent);">
+                            <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-top: 10px; font-weight: 600;">
+                                <span>PRECISE</span>
+                                <span>CREATIVE</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Notifications Overlay -->
+        <div style="position: fixed; bottom: 40px; right: 40px; display: flex; flex-direction: column; gap: 16px; z-index: 1000;">
+            <div class="glass-panel" style="width: 340px; padding: 16px 20px; border-left: 4px solid var(--success); box-shadow: 0 30px 60px rgba(0,0,0,0.6);">
+                <div style="display: flex; gap: 16px; align-items: center;">
+                    <div style="width: 28px; height: 28px; border-radius: 50%; background: rgba(16, 185, 129, 0.1); color: var(--success); display: flex; align-items: center; justify-content: center;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <div>
+                        <div style="font-weight: 700; font-size: 13px;">Groq Connected</div>
+                        <div style="font-size: 11px; color: var(--text-muted);">Latency: 42ms. Model list synced.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="glass-panel" style="width: 340px; padding: 16px 20px; border-left: 4px solid var(--accent); box-shadow: 0 30px 60px rgba(0,0,0,0.6);">
+                <div style="display: flex; gap: 16px; align-items: center;">
+                    <div style="width: 28px; height: 28px; border-radius: 50%; background: rgba(99, 102, 241, 0.1); color: var(--accent); display: flex; align-items: center; justify-content: center;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <div>
+                        <div style="font-weight: 700; font-size: 13px;">Ollama Local Engine</div>
+                        <div style="font-size: 11px; color: var(--text-muted);">Simulated Mode Active. Port 11434 Linked.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- DOCUMENTATION PAGE -->
+    <section id="page-docs" class="page">
+        <div style="margin-bottom: 40px; display: flex; justify-content: space-between; align-items: flex-end;">
+            <div>
+                <div class="mono" style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">SYS_KNOWLEDGE_BASE // ONLINE</div>
+                <h2 style="font-size: 36px;">Documentation</h2>
+            </div>
+            <button class="btn btn-secondary" onclick="navigate('home')">← BACK TO TERMINAL</button>
+        </div>
+
+        <div class="settings-grid" style="grid-template-columns: 250px 1fr; gap: 32px;">
+            <!-- Sidebar -->
+            <div class="glass-panel" style="padding: 24px; position: sticky; top: 100px; height: fit-content;">
+                <h3 class="mono" style="font-size: 10px; color: var(--accent); margin-bottom: 16px;">INDEX</h3>
+                <ul id="docs-sidebar" style="list-style: none; display: flex; flex-direction: column; gap: 12px; font-size: 13px; color: var(--text-muted);">
+                    <li class="doc-nav active" style="color: white; font-weight: 500; cursor: pointer; opacity: 1;" onclick="switchDocTab(1)">1. Getting Started</li>
+                    <li class="doc-nav" style="cursor: pointer; opacity: 0.7;" onclick="switchDocTab(2)">2. Architecture Overview</li>
+                    <li class="doc-nav" style="cursor: pointer; opacity: 0.7;" onclick="switchDocTab(3)">3. API Reference</li>
+                    <li class="doc-nav" style="cursor: pointer; opacity: 0.7;" onclick="switchDocTab(4)">4. Endpoints & Config</li>
+                    <li class="doc-nav" style="cursor: pointer; opacity: 0.7;" onclick="switchDocTab(5)">5. Troubleshooting</li>
+                </ul>
+            </div>
+            
+            <!-- Content -->
+            <div class="glass-panel" style="padding: 40px;" id="docs-content-container">
+                <!-- TAB 1: GETTING STARTED -->
+                <div class="doc-tab active" id="doc-tab-1">
+                    <h3 style="font-size: 24px; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 16px;">Getting Started with Auditrail</h3>
+                    <p style="color: var(--text-muted); line-height: 1.8; margin-bottom: 24px;">
+                        Welcome to the <strong>Auditrail</strong> documentation. This autonomous auditing platform is designed for enterprise AI deployments to detect, analyze, and repair logical discrepancies (hallucinations) in real-time.
+                    </p>
+                    
+                    <h4 style="font-size: 16px; margin: 32px 0 16px;">Core Concepts</h4>
+                    <div class="stats-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 24px;">
+                        <div class="stat-card" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 20px; border-radius: 8px;">
+                            <h5 style="color: var(--accent); margin-bottom: 8px;" class="mono">Claim Extraction</h5>
+                            <p style="font-size: 13px; color: var(--text-muted);">We process incoming text through a fine-tuned extraction layer to identify individual facts, statistics, and entities.</p>
+                        </div>
+                        <div class="stat-card" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 20px; border-radius: 8px;">
+                            <h5 style="color: var(--success); margin-bottom: 8px;" class="mono">Autonomous Repair</h5>
+                            <p style="font-size: 13px; color: var(--text-muted);">When a hallucination is flagged, our rewriting model generates a semantically preserved, factually accurate replacement.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: ARCHITECTURE -->
+                <div class="doc-tab" id="doc-tab-2" style="display: none;">
+                    <h3 style="font-size: 24px; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 16px;">Architecture Overview</h3>
+                    <p style="color: var(--text-muted); line-height: 1.8; margin-bottom: 24px;">
+                        Auditrail employs a decoupled <strong>Client-Server</strong> architecture engineered for rapid inference and maximum security context execution.
+                    </p>
+                    <ul style="color: var(--text-muted); line-height: 1.8; margin-left: 20px; margin-bottom: 24px;">
+                        <li><strong>Frontend:</strong> Rendered in highly optimized static assets (HTML/JS/CSS), utilizing dynamic SPA (Single Page Application) navigation methods for seamless state transitions without latency.</li>
+                        <li><strong>Execution Engine (Backend):</strong> A Flask-based orchestration layer that handles API key routing and manages payload telemetry.</li>
+                        <li><strong>Inference Clusters:</strong> External processing relies heavily on Anthropic's Claude framework for precision parsing, alongside integrated Groq hardware for ultra-low latency.</li>
+                    </ul>
+                </div>
+
+                <!-- TAB 3: API REFERENCE -->
+                <div class="doc-tab" id="doc-tab-3" style="display: none;">
+                    <h3 style="font-size: 24px; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 16px;">API Reference</h3>
+                    <p style="color: var(--text-muted); line-height: 1.8; margin-bottom: 24px;">The Auditrail REST API allows you to programmatically submit prompts for verification.</p>
+                    
+                    <h4 style="font-size: 16px; margin: 32px 0 16px;" class="mono"><span style="color: var(--success);">POST</span> /v1/analyze</h4>
+                    <div class="diagnostic-log mono" style="font-size: 12px; border: 1px solid var(--border); border-radius: 8px; padding: 20px; background: rgba(3,4,7,0.5); margin-bottom: 24px; height: auto;">
+                        <div style="color: #6366f1;">curl -X POST https://127.0.0.1:5000/analyze \</div>
+                        <div style="color: var(--text);">&nbsp;&nbsp;-H "Content-Type: application/json" \</div>
+                        <div style="color: var(--text);">&nbsp;&nbsp;-d '{"text": "Sample data.", "mode": "strict"}'</div>
+                    </div>
+                </div>
+
+                <!-- TAB 4: CONFIGURATION -->
+                <div class="doc-tab" id="doc-tab-4" style="display: none;">
+                    <h3 style="font-size: 24px; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 16px;">Endpoints & Configuration</h3>
+                    <p style="color: var(--text-muted); line-height: 1.8; margin-bottom: 24px;">
+                        Access the <strong>Security Configuration</strong> panel to manage system state. By default, the system requires a valid <code>ANTHROPIC_API_KEY</code> passed as an environment variable to the Flask backend. 
+                        If left blank, the system defaults to a <em>mocked</em> hallucination state for development and testing purposes.
+                    </p>
+                </div>
+
+                <!-- TAB 5: TROUBLESHOOTING -->
+                <div class="doc-tab" id="doc-tab-5" style="display: none;">
+                    <h3 style="font-size: 24px; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 16px;">Troubleshooting</h3>
+                    <p style="color: var(--text-muted); line-height: 1.8; margin-bottom: 16px;"><strong>Q: The Execution Engine freezes at 'VERIFYING_FACTS...'.</strong></p>
+                    <p style="color: var(--text-muted); line-height: 1.8; margin-bottom: 24px; padding-left: 20px; border-left: 2px solid var(--border);">A: Check the Flask console. If Anthropic is rate-limiting, the request may hang or return a 500 error. Check the Security panel Diagnostic Output.</p>
+                    
+                    <p style="color: var(--text-muted); line-height: 1.8; margin-bottom: 16px;"><strong>Q: Why does my LocalStorage buffer say 0 Logs?</strong></p>
+                    <p style="color: var(--text-muted); line-height: 1.8; margin-bottom: 24px; padding-left: 20px; border-left: 2px solid var(--border);">A: Run an audit first. Archives are populated strictly post-execution.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer style="margin-top: 80px; padding: 80px 40px 40px; border-top: 1px solid var(--border); background: #030407; position: relative; overflow: hidden;">
+        <div class="ambient-glow" style="bottom: -200px; left: 50%; transform: translateX(-50%); width: 800px; height: 400px; opacity: 0.05;"></div>
+        
+        <div class="footer-content" style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 60px; position: relative; z-index: 1;">
+            <!-- Column 1: Brand Info -->
+            <div style="display: flex; flex-direction: column; gap: 24px;">
+                <div class="brand" style="font-size: 24px; opacity: 1; cursor: pointer;" onclick="navigate('home')">
+                    <img src="logo.png" alt="Auditrail" style="height: 32px; width: auto; margin-bottom: 4px;" onerror="this.style.display='none'">
+                    <span style="display: block; font-size: 11px; letter-spacing: 0.2em; color: var(--text-muted); font-weight: 500;">INTELLIGENT DATA AUDITING</span>
+                </div>
+                <p style="color: var(--text-muted); font-size: 14px; line-height: 1.6; max-width: 320px;">
+                    Enterprise-grade hallucination detection and autonomous rectification for the next generation of AI deployments.
+                </p>
+                <div style="display: flex; gap: 16px; margin-top: 8px;">
+                    <!-- Social Placeholder Icons -->
+                    <div style="width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-muted); cursor: pointer; transition: all 0.3s;" onmouseenter="this.style.borderColor='var(--accent)'; this.style.color='var(--accent)'" onmouseleave="this.style.borderColor='var(--border)'; this.style.color='var(--text-muted)'">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>
+                    </div>
+                    <div style="width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-muted); cursor: pointer; transition: all 0.3s;" onmouseenter="this.style.borderColor='var(--accent)'; this.style.color='var(--accent)'" onmouseleave="this.style.borderColor='var(--border)'; this.style.color='var(--text-muted)'">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+                    </div>
+                    <div style="width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-muted); cursor: pointer; transition: all 0.3s;" onmouseenter="this.style.borderColor='var(--accent)'; this.style.color='var(--accent)'" onmouseleave="this.style.borderColor='var(--border)'; this.style.color='var(--text-muted)'">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Column 2: Product -->
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <h4 style="font-size: 13px; font-family: var(--font-mono); color: var(--text); letter-spacing: 0.1em; text-transform: uppercase;">Platform</h4>
+                <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px;">
+                    <li><a href="javascript:void(0)" onclick="navigate('scanner')" style="color: var(--text-muted); text-decoration: none; font-size: 14px; transition: color 0.2s;" onmouseenter="this.style.color='var(--accent)'" onmouseleave="this.style.color='var(--text-muted)'">Neural Scanner</a></li>
+                    <li><a href="javascript:void(0)" onclick="navigate('arena')" style="color: var(--text-muted); text-decoration: none; font-size: 14px; transition: color 0.2s;" onmouseenter="this.style.color='var(--accent)'" onmouseleave="this.style.color='var(--text-muted)'">Model Arena</a></li>
+                    <li><a href="javascript:void(0)" onclick="navigate('dashboard')" style="color: var(--text-muted); text-decoration: none; font-size: 14px; transition: color 0.2s;" onmouseenter="this.style.color='var(--accent)'" onmouseleave="this.style.color='var(--text-muted)'">Security Dashboard</a></li>
+                    <li><a href="javascript:void(0)" onclick="navigate('reports')" style="color: var(--text-muted); text-decoration: none; font-size: 14px; transition: color 0.2s;" onmouseenter="this.style.color='var(--accent)'" onmouseleave="this.style.color='var(--text-muted)'">Audit Archive</a></li>
+                </ul>
+            </div>
+
+            <!-- Column 3: Resources -->
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <h4 style="font-size: 13px; font-family: var(--font-mono); color: var(--text); letter-spacing: 0.1em; text-transform: uppercase;">Developers</h4>
+                <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px;">
+                    <li><a href="javascript:void(0)" onclick="navigate('docs')" style="color: var(--text-muted); text-decoration: none; font-size: 14px; transition: color 0.2s;" onmouseenter="this.style.color='var(--accent)'" onmouseleave="this.style.color='var(--text-muted)'">Documentation</a></li>
+                    <li><a href="javascript:void(0)" style="color: var(--text-muted); text-decoration: none; font-size: 14px; transition: color 0.2s;" onmouseenter="this.style.color='var(--accent)'" onmouseleave="this.style.color='var(--text-muted)'">API Reference</a></li>
+                    <li><a href="javascript:void(0)" style="color: var(--text-muted); text-decoration: none; font-size: 14px; transition: color 0.2s;" onmouseenter="this.style.color='var(--accent)'" onmouseleave="this.style.color='var(--text-muted)'">System Status</a></li>
+                    <li><a href="javascript:void(0)" style="color: var(--text-muted); text-decoration: none; font-size: 14px; transition: color 0.2s;" onmouseenter="this.style.color='var(--accent)'" onmouseleave="this.style.color='var(--text-muted)'">Open Source</a></li>
+                </ul>
+            </div>
+
+            <!-- Column 4: Company -->
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <h4 style="font-size: 13px; font-family: var(--font-mono); color: var(--text); letter-spacing: 0.1em; text-transform: uppercase;">Legal</h4>
+                <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px;">
+                    <li><a href="javascript:void(0)" style="color: var(--text-muted); text-decoration: none; font-size: 14px; transition: color 0.2s;" onmouseenter="this.style.color='var(--accent)'" onmouseleave="this.style.color='var(--text-muted)'">Privacy Policy</a></li>
+                    <li><a href="javascript:void(0)" style="color: var(--text-muted); text-decoration: none; font-size: 14px; transition: color 0.2s;" onmouseenter="this.style.color='var(--accent)'" onmouseleave="this.style.color='var(--text-muted)'">Terms of Service</a></li>
+                    <li><a href="javascript:void(0)" style="color: var(--text-muted); text-decoration: none; font-size: 14px; transition: color 0.2s;" onmouseenter="this.style.color='var(--accent)'" onmouseleave="this.style.color='var(--text-muted)'">Cookie Policy</a></li>
+                    <li><a href="javascript:void(0)" style="color: var(--text-muted); text-decoration: none; font-size: 14px; transition: color 0.2s;" onmouseenter="this.style.color='var(--accent)'" onmouseleave="this.style.color='var(--text-muted)'">Security Disclosure</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Bottom strip -->
+        <div class="footer-bottom" style="max-width: 1200px; margin: 60px auto 0; padding-top: 32px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1;">
+            <div class="mono" style="font-size: 11px; color: rgba(255,255,255,0.3); display: flex; align-items: center; gap: 24px;">
+                <span>© 2026 AUDITRAIL PLATFORMS INC.</span>
+                <span style="display: flex; align-items: center; gap: 8px;"><div style="width: 6px; height: 6px; border-radius: 50%; background: var(--success);"></div> ALL SYSTEMS NORMAL</span>
+            </div>
+            <div style="display: flex; gap: 24px; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">
+                <span class="mono" style="opacity: 0.5;">DE_V4.2.0_STABLE</span>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<div id="toast" class="mono" style="font-size: 12px; font-weight: 600;"></div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // ── STATE ──
+    let activePage = 'login';
+    let historyChart, radarChart;
+
+    // ── NAV PROFILE ──
+    function updateNavProfile() {
+        const email = localStorage.getItem('auth_user_email') || '';
+        if (!email) return;
+
+        // Derive display name from email (part before the @)
+        const namePart = email.split('@')[0];
+        const displayName = namePart
+            .replace(/[._-]/g, ' ')
+            .replace(/\b\w/g, c => c.toUpperCase());
+
+        // Get initials (up to 2 chars)
+        const words = displayName.trim().split(' ');
+        const initials = words.length >= 2
+            ? words[0][0] + words[1][0]
+            : displayName.substring(0, 2).toUpperCase();
+
+        const usernameEl    = document.getElementById('nav-username');
+        const emailEl       = document.getElementById('nav-useremail');
+        const avatarEl      = document.getElementById('nav-avatar');
+        const dropNameEl    = document.getElementById('dropdown-name');
+        const dropEmailEl   = document.getElementById('dropdown-email');
+
+        if (usernameEl)  usernameEl.textContent  = displayName;
+        if (emailEl)     emailEl.textContent     = email;
+        if (avatarEl)    avatarEl.textContent    = initials;
+        if (dropNameEl)  dropNameEl.textContent  = displayName;
+        if (dropEmailEl) dropEmailEl.textContent = email;
+    }
+
+    // ── NAVIGATION (SPA) ──
+    function navigate(pageId) {
+        // Clear Active State
+        document.querySelectorAll('.page').forEach(page => {
+            page.classList.remove('active');
+            page.style.display = 'none';
+        });
+
+        // Set New Active
+        const targetPage = document.getElementById('page-' + pageId);
+        if (!targetPage) return console.error('TARGET_PAGE_NOT_FOUND:', pageId);
+
+        targetPage.style.display = pageId === 'login' ? 'flex' : 'block';
+        setTimeout(() => targetPage.classList.add('active'), 10);
+
+        // Header Visibility
+        document.getElementById('main-nav').style.display = pageId === 'login' ? 'none' : 'flex';
+
+        // Nav Active Highlighter
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.classList.toggle('active', item.dataset.nav === pageId);
+        });
+
+        activePage = pageId;
+
+        if (pageId === 'dashboard') { initCharts(); initSecurityFeed(); }
+        if (pageId === 'home') startHomeTerminal();
+        if (pageId === 'reports') renderReportsArchive();
+        if (pageId === 'security') initSecurityPage();
+        
+        window.scrollTo(0, 0);
+    }
+
+    let authMode = 'login';
+    function toggleAuthMode() {
+        authMode = authMode === 'login' ? 'signup' : 'login';
+        const title = document.getElementById('auth-title');
+        const subtitle = document.getElementById('auth-subtitle');
+        const submitBtn = document.getElementById('auth-submit-btn');
+        const confirmPass = document.getElementById('confirm-pass-card');
+        const hint = document.getElementById('toggle-hint');
+        const link = document.getElementById('auth-toggle-link');
+
+        if (authMode === 'signup') {
+            title.textContent = 'Create Account';
+            subtitle.textContent = 'Register for access to Auditrail';
+            submitBtn.textContent = 'Register Session';
+            confirmPass.style.display = 'block';
+            hint.textContent = 'Already have an account?';
+            link.textContent = 'Sign In';
+        } else {
+            title.textContent = 'Access Gateway';
+            subtitle.textContent = 'Enter your credentials to proceed';
+            submitBtn.textContent = 'Initialize Session';
+            confirmPass.style.display = 'none';
+            hint.textContent = "Don't have an account?";
+            link.textContent = 'Sign Up';
+        }
+    }
+
+    function doAuthAction() {
+        const emailInput = document.getElementById('auth-email');
+        const passInput  = document.getElementById('auth-pass');
+        const btn        = document.getElementById('auth-submit-btn');
+
+        const email    = emailInput ? emailInput.value.trim() : 'user@auditrail.io';
+        const password = passInput  ? passInput.value.trim()  : '';
+
+        if (!email) { showToast('ERROR: EMAIL_REQUIRED'); return; }
+
+        // Save email immediately before any DOM changes
+        localStorage.setItem('auth_user_email', email);
+
+        btn.textContent = 'AUTHENTICATING...';
+        btn.disabled = true;
+        btn.style.opacity = '0.7';
+
+        // Simulate auth delay, then go straight to home
+        setTimeout(() => {
+            localStorage.setItem('auth_session_active', 'true');
+            navigate('home');
+            updateNavProfile();
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.textContent = 'Initialize Session';
+        }, 1200);
+    }
+
+    function doAuthPhase2() {
+        // Legacy - kept for compatibility
+        const btn = document.querySelector('.login-form button');
+        if (btn) { btn.textContent = 'AUTHENTICATING...'; btn.disabled = true; }
+        setTimeout(() => {
+            localStorage.setItem('auth_session_active', 'true');
+            navigate('home');
+            updateNavProfile();
+        }, 800);
+    }
+
+    function doLogout() {
+        localStorage.removeItem('auth_session_active');
+        closeProfileMenu();
+        navigate('login');
+        showToast('SYSTEM_LOGOUT: SESSION_TERMINATED');
+    }
+
+    function toggleProfileMenu() {
+        const dropdown = document.getElementById('profile-dropdown');
+        const isOpen = dropdown.style.display !== 'none';
+        dropdown.style.display = isOpen ? 'none' : 'block';
+    }
+
+    function closeProfileMenu() {
+        const dropdown = document.getElementById('profile-dropdown');
+        if (dropdown) dropdown.style.display = 'none';
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        const wrapper = document.getElementById('profile-menu-wrapper');
+        if (wrapper && !wrapper.contains(e.target)) closeProfileMenu();
+    });
+
+    // ── CHARTS ──
+    function initCharts() {
+        if (historyChart) historyChart.destroy();
+        if (radarChart) radarChart.destroy();
+
+        // Historical Data dynamic mapping
+        let archive = JSON.parse(localStorage.getItem('audit_archive') || '[]');
+        archive = archive.slice(0,5).reverse();
+
+        while (archive.length < 5) {
+            archive.unshift({ date: 'T-' + (archive.length*12) + 'H', rate: (Math.random() * 5 + 1).toFixed(1) + '%' });
+        }
+
+        const labels = archive.map(a => {
+            if (a.date.startsWith('T-')) return a.date;
+            const d = new Date(a.date);
+            if (isNaN(d)) return a.date;
+            return (d.getMonth() + 1) + '/' + d.getDate();
+        });
+
+        const consistencyData = archive.map(a => 1 - (parseFloat(a.rate)/100));
+        const riskData = archive.map(a => parseFloat(a.rate)/100);
+
+        let totalRate = 0;
+        let count = 0;
+        let actualData = JSON.parse(localStorage.getItem('audit_archive') || '[]');
+        if (actualData.length > 0) {
+            actualData.forEach(r => { totalRate += parseFloat(r.rate); count++; });
+            const avg = (totalRate / count).toFixed(2);
+            const rateElem = document.getElementById('dashboard-hallucination-rate');
+            if(rateElem) rateElem.innerText = avg + '%';
+        }
+
+        const ctxHist = document.getElementById('historyChart').getContext('2d');
+        historyChart = new Chart(ctxHist, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'CONSISTENCY',
+                        data: consistencyData,
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.05)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#6366f1'
+                    },
+                    {
+                        label: 'RISK_FACTOR',
+                        data: [0.15, 0.22, 0.12, 0.18, 0.04],
+                        borderColor: '#a855f7',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        pointRadius: 0,
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: 'rgba(255,255,255,0.2)', font: { family: 'JetBrains Mono', size: 10 } } },
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.2)', font: { family: 'JetBrains Mono', size: 10 } } }
+                }
+            }
+        });
+
+        // Biometrics Radar
+        const ctxRadar = document.getElementById('radarChart').getContext('2d');
+        radarChart = new Chart(ctxRadar, {
+            type: 'radar',
+            data: {
+                labels: ['SAFETY', 'CONTEXT', 'SPEED', 'LOGIC', 'BIAS'],
+                datasets: [{
+                    data: [85, 92, 75, 88, 94],
+                    backgroundColor: 'rgba(99, 102, 241, 0.2)',
+                    borderColor: '#6366f1',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    r: {
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        angleLines: { color: 'rgba(255,255,255,0.1)' },
+                        pointLabels: { color: 'rgba(255,255,255,0.4)', font: { family: 'JetBrains Mono', size: 10 } },
+                        ticks: { display: false }
+                    }
+                }
+            }
+        });
+
+        renderDashboardLogs();
+    }
+
+    function renderDashboardLogs() {
+        const body = document.getElementById('audit-table-body');
+        const logs = [
+            { id: '#AU-992-K2', model: 'Claude-3-Opus-Production', status: 'verified', score: '0.9982' },
+            { id: '#AU-991-L9', model: 'GPT-4-Turbo-Preview', status: 'unverified', score: '0.8412' },
+            { id: '#AU-989-M1', model: 'Llama-3-70B-Base', status: 'hallucination', score: '0.4219' },
+            { id: '#AU-988-P4', model: 'Mistral-Large-2407', status: 'verified', score: '0.9855' }
+        ];
+
+        body.innerHTML = logs.map(log => `
+            <tr>
+                <td><div style="display: flex; align-items: center; gap: 12px;"><div class="status-dot" style="background: ${log.status === 'verified' ? 'var(--accent)' : (log.status === 'unverified' ? 'var(--warning)' : 'var(--error)')}"></div> ${log.id}</div></td>
+                <td style="color: rgba(255,255,255,0.7);">${log.model}</td>
+                <td><span class="badge badge-${log.status}"><div class="status-dot" style="background: currentColor;"></div> ${log.status}</span></td>
+                <td style="text-align: right; font-weight: 700;">${log.score}</td>
+            </tr>
+        `).join('');
+    }
+
+    // ── TERMINAL ENGINE ──
+    let terminalStarted = false;
+    async function startHomeTerminal() {
+        if (terminalStarted) return;
+        terminalStarted = true;
+        const body = document.getElementById('home-terminal');
+        const cursor = body.querySelector('.term-cursor');
+
+        const lines = [
+            { t: 'admin@system:~$ ./audit_run --target edge-node-04', c: 'var(--accent)' },
+            { t: '[INFO] Initializing quantum-resistant handshake...', c: '' },
+            { t: '[INFO] Scanning neural weights for prompt injection...', c: '' },
+            { t: '>> WEIGHTS_CLEAN: 99.8% confidence', c: 'var(--success)' },
+            { t: '[INFO] Checking API endpoint /v1/predict...', c: '' },
+            { t: '!! VULNERABILITY_FOUND: Insecure direct object reference', c: 'var(--error)' },
+            { t: '[INFO] Generating remediation report...', c: '' },
+            { t: '[SUCCESS] Audit cycle complete in 420ms.', c: 'var(--success)' }
+        ];
+
+        for (const line of lines) {
+            const div = document.createElement('div');
+            div.style.color = line.c || 'inherit';
+            body.insertBefore(div, cursor);
+            for (const char of line.t) {
+                div.textContent += char;
+                await new Promise(r => setTimeout(r, line.c === 'var(--accent)' ? 30 : 5));
+            }
+            await new Promise(r => setTimeout(r, 500));
+        }
+    }
+
+    // ── SCANNER ──
+    async function runAudit() {
+        const input = document.getElementById('scanner-input').value.trim();
+        const engine = document.getElementById('engine-select').value;
+        const mode = document.getElementById('audit-mode-select').value;
+        if (!input) return showToast('ERROR: NO INPUT DATA TO AUDIT');
+
+        const btn = document.getElementById('run-audit-btn');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span class="mono">VERIFYING...</span>';
+        btn.disabled = true;
+
+        const outputContainer = document.getElementById('corrected-output-container');
+        outputContainer.innerHTML = '<div style="text-align: center; padding: 100px 0; opacity: 0.5;">[ GENERATING_AUTONOMOUS_CORRECTION... ]</div>';
+
+        const statElem = document.getElementById('query-status');
+        statElem.innerText = `EXTRACTING_CLAIMS (${engine.toUpperCase()})...`;
+        statElem.style.color = 'var(--accent)';
+
+        setTimeout(() => {
+            document.getElementById('ai-assistant').style.display = 'block';
+        }, 1500);
+
+        try {
+            // Step 1: Analyze for Hallucinations
+            const res = await fetch('/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: input, mode: mode, engine: engine })
+            });
+            statElem.innerText = 'VERIFYING_FACTS...';
+            const analyzeData = await res.json();
+            
+            statElem.innerText = 'REWRITING_DOCUMENT...';
+            const rewriteRes = await fetch('/rewrite', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: input, claims: analyzeData.claims, engine: engine })
+            });
+            const rewriteData = await rewriteRes.json();
+            statElem.innerText = 'AUDIT_COMPLETE';
+            statElem.style.color = 'var(--success)';
+            setTimeout(() => {
+                statElem.innerText = 'QUERY_SYSTEM_READY';
+                statElem.style.color = 'var(--text-muted)';
+            }, 3000);
+            
+            renderScannerResults(analyzeData.claims, rewriteData.rewritten);
+            
+            // Update stats
+            const rate = (analyzeData.claims.filter(c => c.status !== 'verified').length / analyzeData.claims.length * 100).toFixed(1);
+            document.getElementById('scan-conf').textContent = (96 + Math.random() * 3).toFixed(1) + '%';
+            document.getElementById('scan-anom').textContent = analyzeData.claims.filter(c => c.status !== 'verified').length.toString().padStart(2, '0');
+            document.getElementById('dashboard-hallucination-rate').textContent = rate + '%';
+            if (document.getElementById('scanner-hallucination-rate')) {
+                document.getElementById('scanner-hallucination-rate').textContent = rate + '%';
+            }
+
+            // Persistence
+            saveAuditToArchive({
+                id: '#AU-' + Math.floor(Math.random()*1000).toString().padStart(3,'0'),
+                model: 'AUD_GPT_4_TURBO',
+                date: new Date().toLocaleDateString(),
+                rate: rate + '%',
+                status: 'AUTONOMOUS_FIX'
+            });
+
+        } catch (e) {
+            showToast('CONNECTION_FAILURE: AUDIT_STALLED');
+            outputContainer.innerHTML = '<div style="text-align: center; padding: 100px 0; color: var(--error);">[ AUDIT_FAILED ]</div>';
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    function renderScannerResults(claims, rewrittenText) {
+        const body = document.getElementById('discrepancy-body');
+        body.innerHTML = '';
+
+        claims.forEach((c, i) => {
+            const hasCorrection = c.status !== 'verified' && c.rewrite;
+            body.innerHTML += `
+                <tr>
+                    <td class="mono" style="opacity: 0.4;">FACT_${(i + 92).toString().padStart(3, '0')}</td>
+                    <td>
+                        <div style="font-weight: 700; color: white;">${c.claim.slice(0, 40)}${c.claim.length > 40 ? '...' : ''}</div>
+                    </td>
+                    <td>
+                        <div class="mono" style="font-size: 11px; color: ${hasCorrection ? 'var(--success)' : 'var(--text-muted)'};">
+                            ${hasCorrection ? c.rewrite : '<span style="opacity:0.3">-- NO CHANGE --</span>'}
+                        </div>
+                    </td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="mono" style="width: 40px; text-align: right;">${c.confidence}%</span>
+                            <div style="flex: 1; height: 3px; background: rgba(255,255,255,0.05); border-radius: 2px;">
+                                <div style="width: ${c.confidence}%; height: 100%; background: ${c.status === 'verified' ? 'var(--success)' : 'var(--accent)'};"></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="text-align: right;">
+                        <span class="badge badge-${c.status}">${c.status}</span>
+                    </td>
+                </tr>
+            `;
+        });
+
+        // Populate corrected output panel with highlights
+        const outputContainer = document.getElementById('corrected-output-container');
+        let displayHtml = rewrittenText;
+        
+        // Simple heuristic highlighting for corrections
+        if (displayHtml.includes('[CORRECTED:')) {
+            displayHtml = displayHtml.replace(/\[CORRECTED: (.*?)\]/g, '<span style="background: rgba(16, 185, 129, 0.15); color: var(--success); padding: 2px 4px; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.2);">$1</span>');
+        }
+        
+        outputContainer.innerHTML = `<div style="line-height: 1.8; white-space: pre-wrap;">${displayHtml}</div>`;
+        outputContainer.setAttribute('data-raw-text', rewrittenText);
+    }
+
+    function handleFileUpload(event) {
+        console.log('TRACE: Ingestion Request Triggered');
+        const file = (event.dataTransfer && event.dataTransfer.files[0]) || (event.target && event.target.files[0]);
+        if (!file) return;
+
+        const filenameElem = document.getElementById('uploaded-filename');
+        const editor = document.getElementById('scanner-input');
+        
+        if (filenameElem) {
+            filenameElem.innerText = `INGESTING: ${file.name.toUpperCase()}...`;
+            filenameElem.style.color = 'var(--warning)';
+        }
+
+        const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+        
+        // ── PDF EXTRACTION PATH ──
+        if (ext === '.pdf') {
+            if (typeof pdfjsLib === 'undefined') {
+                showToast('ERROR: PDF_ENGINE_NOT_READY');
+                if (filenameElem) filenameElem.innerText = 'ENGINE_ERROR';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const typedarray = new Uint8Array(e.target.result);
+                    const loadingTask = pdfjsLib.getDocument({ data: typedarray });
+                    const pdf = await loadingTask.promise;
+                    let fullText = '';
+                    
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const content = await page.getTextContent();
+                        // Filter and join items with specific handling for structural characters
+                        const pageText = content.items
+                            .map(item => item.str || '')
+                            .join(' ');
+                        fullText += pageText + '\n\n';
+                    }
+
+                    if (editor) editor.value = fullText.trim();
+                    if (filenameElem) {
+                        filenameElem.innerText = file.name.toUpperCase();
+                        filenameElem.style.color = 'var(--accent)';
+                    }
+                    showToast('PDF_LOADED: ' + file.name.toUpperCase());
+                } catch (err) {
+                    console.error('PDF_INGESTION_ERR:', err);
+                    showToast('ERROR: PDF_INGESTION_FAILED');
+                    if (filenameElem) {
+                        filenameElem.innerText = 'INGESTION_ERROR';
+                        filenameElem.style.color = 'var(--error)';
+                    }
+                }
+            };
+            reader.readAsArrayBuffer(file);
+            if (event.target) event.target.value = '';
+            return;
+        }
+
+        // ── TEXT EXTRACTION PATH ──
+        const validTextExtensions = ['.txt', '.md', '.json', '.csv', '.log', '.js', '.py'];
+        if (!validTextExtensions.includes(ext)) {
+            showToast('ERROR: UNSUPPORTED_FORMAT');
+            if (filenameElem) filenameElem.innerText = 'UNSUPPORTED_TYPE';
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            showToast('ERROR: FILE_TOO_LARGE');
+            if (filenameElem) filenameElem.innerText = 'SIZE_LIMIT_EXCEEDED';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            if (editor) editor.value = e.target.result;
+            if (filenameElem) {
+                filenameElem.innerText = file.name.toUpperCase();
+                filenameElem.style.color = 'var(--accent)';
+            }
+            showToast('DOC_LOADED: ' + file.name.toUpperCase());
+            if (event.target) event.target.value = '';
+        };
+        reader.onerror = function() {
+            showToast('ERROR: READ_FAILURE');
+            if (filenameElem) filenameElem.innerText = 'READ_ERROR';
+        };
+        reader.readAsText(file);
+    }
+
+    // Initialize Drag & Drop
+    function initDragAndDrop() {
+        const dropZone = document.getElementById('scanner-drop-zone');
+        if (!dropZone) return;
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            }, false);
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('drag-over'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('drag-over'), false);
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            handleFileUpload(e);
+        }, false);
+    }
+
+    // ── SECURITY FEED ──
+    // ── SECURITY FEED (DASHBOARD) ──
+    function initSecurityFeed() {
+        const feed = document.getElementById('live-security-feed');
+        if (!feed || feed.children.length > 0) return;
+        
+        const logs = [
+            "Pinging Groq Cluster... [OK]",
+            "Neural weights verified. (0x992)",
+            "System entropy: 0.042 (Stable)",
+            "Latency spike detected: 42ms",
+            "Encrypting data buffers...",
+            "SSL Handshake: SECURE v1.3",
+            "Audit cycle 4492 initiated.",
+            "Memory leak check: 0 bytes."
+        ];
+
+        setInterval(() => {
+            const line = document.createElement('div');
+            line.innerHTML = `<span style="color: var(--accent); opacity: 0.5;">></span> ${logs[Math.floor(Math.random()*logs.length)]}`;
+            feed.prepend(line);
+            if (feed.children.length > 5) feed.removeChild(feed.lastChild);
+        }, 3000);
+    }
+
+    // ── SECURITY CONFIGURATION PAGE ──
+    let securityLogInterval;
+    function initSecurityPage() {
+        const log = document.getElementById('diag-log');
+        if (log.children.length > 0) return;
+
+        addDiagnosticLog('INITIALIZING SECURITY PROTOCOLS...', 'warning');
+        addDiagnosticLog('FETCHING ENDPOINT CONFIGURATION...', 'accent');
+        
+        if (securityLogInterval) clearInterval(securityLogInterval);
+        securityLogInterval = setInterval(() => {
+            const msgs = [
+                'System heartbeat: OPTIMAL',
+                'Memory clearance: OK',
+                'Port 5000: LISTENING',
+                'Background encryption thread active',
+                'User session verified (LocalStorage)'
+            ];
+            if (activePage === 'security') {
+                addDiagnosticLog(msgs[Math.floor(Math.random()*msgs.length)], 'text-muted');
+            }
+        }, 8000);
+    }
+
+    function addDiagnosticLog(msg, type = 'accent') {
+        const log = document.getElementById('diag-log');
+        const line = document.createElement('div');
+        const time = new Date().toLocaleTimeString();
+        line.innerHTML = `<span style="opacity: 0.3;">[${time}]</span> <span style="color: var(--${type});">[${type.toUpperCase()}]</span> ${msg}`;
+        log.appendChild(line);
+        log.scrollTop = log.scrollHeight;
+    }
+
+    async function testConnection(target) {
+        addDiagnosticLog(`INITIALIZING CONNECTION TEST FOR: ${target}`, 'warning');
+        try {
+            const res = await fetch('/test_connection', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ target: target })
+            });
+            const data = await res.json();
+            addDiagnosticLog(`${data.message} (LATENCY: ${data.latency})`, 'success');
+            showToast(`SUCCESS: ${target} CONNECTED`);
+        } catch (e) {
+            addDiagnosticLog(`CONNECTION_REFUSED: ${target}_CLUSTER_UNREACHABLE`, 'error');
+            showToast(`ERROR: ${target} DISCONNECTED`);
+        }
+    }
+
+    // ── REPORTS ARCHIVE ──
+    function saveAuditToArchive(report) {
+        let archive = JSON.parse(localStorage.getItem('audit_archive') || '[]');
+        archive.unshift(report);
+        localStorage.setItem('audit_archive', JSON.stringify(archive.slice(0, 10)));
+    }
+
+    function renderReportsArchive() {
+        const body = document.getElementById('reports-archive-body');
+        const hint = document.getElementById('no-reports-hint');
+        let archive = JSON.parse(localStorage.getItem('audit_archive') || '[]');
+
+        if (archive.length === 0) {
+            body.innerHTML = '';
+            hint.style.display = 'block';
+        } else {
+            hint.style.display = 'none';
+            body.innerHTML = archive.map(r => `
+                <tr>
+                    <td class="mono">${r.id}</td>
+                    <td style="color: rgba(255,255,255,0.7);">${r.model}</td>
+                    <td class="mono">${r.date}</td>
+                    <td style="font-weight: 700; color: var(--error);">${r.rate}</td>
+                    <td>
+                        <div style="display: flex; justify-content: flex-end; gap: 12px; align-items: center;">
+                            <span class="badge badge-verified" style="background: rgba(255,255,255,0.05); color: #fff;">${r.status}</span>
+                            <button class="btn btn-outline" style="padding: 0; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border-color: rgba(239, 68, 68, 0.2);" onclick="deleteReport('${r.id}')" title="Delete Record">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--error)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+    }
+
+    function deleteReport(id) {
+        let archive = JSON.parse(localStorage.getItem('audit_archive') || '[]');
+        archive = archive.filter(r => r.id !== id);
+        localStorage.setItem('audit_archive', JSON.stringify(archive));
+        renderReportsArchive();
+        showToast('RECORD DELETED: ' + id);
+    }
+
+    function confirmFlag() {
+        document.getElementById('ai-assistant').style.display = 'none';
+        showToast('SYSTEM: ANOMALY_FLAGGED_SUCCESSFULLY');
+    }
+
+    function ignoreFlag() {
+        document.getElementById('ai-assistant').style.display = 'none';
+        showToast('SYSTEM: ANOMALY_IGNORED');
+    }
+
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.innerText = msg;
+        t.style.display = 'block';
+        setTimeout(() => t.style.display = 'none', 3000);
+    }
+
+    // ── DOCUMENTATION PORTAL ──
+    function switchDocTab(index) {
+        // Update sidebar links visually
+        document.querySelectorAll('.doc-nav').forEach((nav, i) => {
+            if (i === index - 1) {
+                nav.style.color = 'white';
+                nav.style.fontWeight = '500';
+                nav.style.opacity = '1';
+                nav.classList.add('active');
+            } else {
+                nav.style.color = 'var(--text-muted)';
+                nav.style.fontWeight = 'normal';
+                nav.style.opacity = '0.7';
+                nav.classList.remove('active');
+            }
+        });
+
+        // Hide all tabs, show the active one
+        document.querySelectorAll('.doc-tab').forEach((tab, i) => {
+            tab.style.display = (i === index - 1) ? 'block' : 'none';
+        });
+        
+        // Ensure container scrolls to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ── PDF EXPORT ──
+    function exportReportPDF(elementId) {
+        showToast('GENERATING_PDF_REPORT...');
+        const element = document.getElementById(elementId);
+        if (!element) return;
+        
+        const opt = {
+          margin:       0.5,
+          filename:     'Auditrail_Export.pdf',
+          image:        { type: 'jpeg', quality: 0.98 },
+          html2canvas:  { scale: 2, useCORS: true, logging: false },
+          jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(element).save().then(() => showToast('PDF_EXPORT_COMPLETE'));
+    }
+
+    // ── TX EXPORT (CORRECTED DOCUMENT) ──
+    function downloadCorrectedDocument() {
+        const container = document.getElementById('corrected-output-container');
+        if (!container || container.innerText.includes('[ AWAITING_AUDIT_EXECUTION ]')) {
+            showToast('ERROR: NO CORRECTED TEXT TO DOWNLOAD');
+            return;
+        }
+        
+        let text = container.getAttribute('data-raw-text');
+        if (!text) text = container.innerText;
+
+        const blob = new Blob([text], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'Auditrail_Corrected.tx';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('SUCCESS: FILE SAVED');
+    }
+
+    // ── ARENA RACE ──
+    function runArenaRace() {
+        const btn = document.getElementById('arena-btn');
+        btn.disabled = true;
+        btn.innerText = 'RACING...';
+
+        const models = [
+            { id: 'arena-gpt', latency: 850 + Math.random() * 400, result: "Detected 2 anomalies. High confidence hallucination regarding 'Marie Curie' inventing Quantum Computing." },
+            { id: 'arena-claude', latency: 450 + Math.random() * 200, result: "1 Hallucination marked. Quantum computing timeline is historically incorrect." },
+            { id: 'arena-llama', latency: 1200 + Math.random() * 600, result: "Identified factual inconsistencies in entity attribution (Marie Curie)." }
+        ];
+
+        models.forEach(m => {
+            const panel = document.getElementById(m.id);
+            panel.querySelector('.stat').innerText = 'ANALYZING...';
+            panel.querySelector('.stat').style.color = 'var(--accent)';
+            panel.querySelector('.status-dot').className = 'status-dot term-yel';
+            panel.querySelector('.content').innerText = '';
+            
+            setTimeout(() => {
+                panel.querySelector('.stat').innerText = 'COMPLETE';
+                panel.querySelector('.stat').style.color = 'var(--success)';
+                panel.querySelector('.status-dot').className = 'status-dot term-grn';
+                panel.querySelector('.val').innerText = Math.floor(m.latency) + 'ms';
+                panel.querySelector('.content').innerHTML = `<span style="color: var(--warning);">${m.result}</span>`;
+            }, m.latency);
+        });
+
+        setTimeout(() => {
+            btn.disabled = false;
+            btn.innerText = 'INITIATE RACE';
+        }, 2000);
+    }
+
+    // Default Sample Text
+    document.getElementById('scanner-input').value = `The primary neural synchronization protocol dictates that all sub-lattices must maintain a coherence factor of 0.992 or higher during a level 4 data burst. If the lattice drops below 0.85, the automated fallback mechanism is supposed to initiate a cold-swap to the redundant silicon core in Sector 7-G. Current telemetry indicates that Sector 7-G is operating at 40% thermal capacity, which is within the standard safety margin for neural re-routing. However, the generated summary suggests that thermal capacity is at 95%, triggering a false critical alarm across the mainframe.`;
+
+    // Start App
+    const isAuth = localStorage.getItem('auth_session_active');
+    if (isAuth === 'true') {
+        navigate('home');
+        updateNavProfile();
+    } else {
+        navigate('login');
+    }
+
+    initDragAndDrop();
+</script>
+
+</body>
+</html>
